@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погода</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #007BFF;
+        }
+        .info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Погода по маршруту</h1>
+        <p class="info">Отправление из: <b>{{ start }}</b></p>
+        <p class="info">Прибытие в: <b>{{ end }}</b></p>
+
+        <p class="info">Погода в <b>{{ adr_start }}</b> {{ text_res_start }}</p>
+
+        <p class="info">Температура: <b>{{ temp_start }}°С</b></p>
+        <p class="info">Скорость ветра: <b>{{ wind_speed_start }} м/с</b></p>
+        <p class="info">Вероятность дождя: <b>{{ rain_prob_start }} %</b></p>
+
+
+        <p class="info">Погода в <b>{{ adr_end }}</b> {{ text_res_end }}</p>
+
+        <p class="info">Температура: <b>{{ temp_end }}°С</b></p>
+        <p class="info">Скорость ветра: <b>{{ wind_speed_end }} м/с</b></p>
+        <p class="info">Вероятность дождя: <b>{{ rain_prob_end }} %</b></p>
+
+        <a href="/" class="back-button">Вернуться назад</a>
+    </div>
+</body>
+</html>
