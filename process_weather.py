@@ -75,3 +75,11 @@ def get_forecast_by_lat_lon(lat, lon):
         'wind_speed': wind_speed,
         'rain_prob': rain_prob,
     }
+
+
+def define_if_weather_is_bad(temp, wind_speed, rain_prob):
+  if 0 < temp < 35:
+    if wind_speed < 11:
+      if rain_prob < 70:
+        return 'weather is good'
+  return 'weather is bad'
