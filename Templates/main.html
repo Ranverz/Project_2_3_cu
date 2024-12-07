@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Маршрут</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        form {
+            max-width: 400px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+        }
+        input {
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Введите маршрут</h1>
+    <form action="/weather-result" method="POST">
+        <label for="start">Начальная точка:</label>
+        <input type="text" id="start" name="start" placeholder="Введите название города" required>
+
+        <label for="end">Конечная точка:</label>
+        <input type="text" id="end" name="end" placeholder="Введите название города" required>
+
+        <button type="submit">Построить маршрут</button>
+    </form>
+</body>
+</html>
