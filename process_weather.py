@@ -29,3 +29,49 @@ def get_coords_by_address(address: str):
     else:
         return 'not a valid address'
 
+def get_geopos_by_lat_lon(lat, lon):
+    geo_url = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search'
+    params = {
+        'apikey': weather_key,
+        'q': f'{lat},{lon}',
+    }
+    try:
+        response = requests.get(geo_url, params=params)
+    except:
+        return 'cant access geodata'
+    return response.json()['Key'] #str
+
+
+def get_forecast_by_lat_lon(lat, lon):
+
+    lockey = get_geopos_by_lat_lon(lat, lon)
+    if lockey != 'cant access geodata':
+        forecast_url = f'http://dataservice.accuweather.com/forecasts/v1/daily/1day/{lockey}'
+        params = {
+            'apikey': weather_key,
+            'details': True,
+            'metric': True,
+        }
+        try:
+            response = requests.get(forecast_url, params=params)
+        except:
+            return 'cant get forecast data'
+    else:
+        return 'cant access geodata'
+
+    temp_min = response.json()['DailyForecasts'][0]['Temperature']['Minimum']['Value']
+    temp_max = response.json()['DailyForecasts'][0]['Temperature']['Maximum']['Value']
+
+    humidity_procent_max = response.json()['DailyForecasts'][0]['Day']['RelativeHumidity']['Maximum']
+    humidity_procent_avg = response.json()['DailyForecasts'][0]['Day']['RelativeHumidity']['Average']
+    humidity_procent_min = response.json()['DailyForecasts'][0]['Day']['RelativeHumidity']['Minimum']
+
+    wind_speed = response.json()['DailyForecasts'][0]['Day']['Wind']['Speed']['Value']
+
+    rain_prob = response.json()['DailyForecasts'][0]['Day']['RainProbability']
+    return {
+        'temp': {'min': temp_min, 'max': temp_max},
+        'humidity_procent': {'min': humidity_procent_min, 'max': humidity_procent_max, 'avg': humidity_procent_avg},
+        'wind_speed': wind_speed,
+        'rain_prob': rain_prob,
+    }
