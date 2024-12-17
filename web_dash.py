@@ -4,7 +4,7 @@ from dash import Dash, dcc, html, Input, Output, State
 import pandas as pd
 from process_weather import get_forecast_by_lat_lon, get_coords_by_address
 
-# Initialize Dash app
+
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server  # Expose server for deployment
 
@@ -17,16 +17,20 @@ navbar = dbc.NavbarSimple(
     className="mb-4"
 )
 
-
-# Function for generating intermediate points input
-def generate_intermediate_input(n):
-    return [
-        dbc.Col([
-            html.Label(f"Промежуточная точка {i + 1}:", style={'fontWeight': 'bold'}),
-            dbc.Input(id=f'point-input-{i + 1}', type='text', placeholder='Введите адрес')
-        ], width=6) for i in range(n)
-    ]
-
+# Modal for entering intermediate points
+modal = dbc.Modal(
+    [
+        dbc.ModalHeader("Введите промежуточные точки"),
+        dbc.ModalBody(
+            dbc.Input(id='intermediate-points-input', type='text', placeholder='Введите адреса через запятую')
+        ),
+        dbc.ModalFooter(
+            dbc.Button("Сохранить", id='save-points-button', className='ml-auto')
+        )
+    ],
+    id='intermediate-points-modal',
+    size='lg',
+)
 
 # Input Section
 input_section = dbc.Container([
@@ -40,7 +44,6 @@ input_section = dbc.Container([
             dbc.Input(id='end-input', type='text', placeholder='Введите адрес'),
         ], width=6),
     ], className="mb-3"),
-
     dbc.Row([
         dbc.Col([
             html.Label("Количество дней для прогноза:", style={'fontWeight': 'bold'}),
@@ -57,11 +60,9 @@ input_section = dbc.Container([
             ),
         ], width=6),
         dbc.Col([
-            html.Label("Промежуточные точки:", style={'fontWeight': 'bold'}),
-            dbc.Button("Добавить промежуточную точку", id='add-point-button', color='secondary', n_clicks=0)
+            dbc.Button("Добавить промежуточные точки", id='add-point-button', color='secondary', n_clicks=0)
         ], width=6),
     ], className="mb-3"),
-
     dbc.Row([
         dbc.Col([
             dbc.Button("Получить прогноз", id='submit-button', color='success', n_clicks=0, className='mt-2'),
@@ -73,6 +74,7 @@ input_section = dbc.Container([
 app.layout = dbc.Container([
     navbar,
     input_section,
+    modal,
     dcc.Loading(
         id="loading-spinner",
         type="circle",
@@ -102,12 +104,10 @@ app.layout.children.append(
     dcc.Store(id='weather-data-store')
 )
 
-
 def generate_weather_card(address, weather_data, index, days):
     forecast = weather_data['forecast'][index]
     forecast_cards = []
     for day in range(days):
-        # Рассчитываем среднюю температуру
         temp_avg = round((forecast[day]['temp']['min'] + forecast[day]['temp']['max']) / 2)
         forecast_cards.append(
             html.Div([
@@ -125,7 +125,23 @@ def generate_weather_card(address, weather_data, index, days):
     return card
 
 
+# Callback to open the modal
+@app.callback(
+    Output('intermediate-points-modal', 'is_open'),
+    Input('add-point-button', 'n_clicks'),
+    Input('save-points-button', 'n_clicks'),
+    State('intermediate-points-modal', 'is_open'),
+    State('intermediate-points-input', 'value')
+)
+def toggle_modal(add_clicks, save_clicks, is_open, points_input):
+    if add_clicks:
+        return True
+    if save_clicks:
+        return False
+    return is_open
 
+
+# Update weather data callback to include intermediate points
 @app.callback(
     [Output('output-weather', 'children'),
      Output('weather-data-store', 'data'),
@@ -134,42 +150,34 @@ def generate_weather_card(address, weather_data, index, days):
     [State('start-input', 'value'),
      State('end-input', 'value'),
      State('days-selector', 'value'),
-     State('add-point-button', 'n_clicks')]
+     State('intermediate-points-input', 'value')]
 )
-def update_weather_data(n_clicks, start, end, days, add_points_click):
+def update_weather_data(n_clicks, start, end, days, intermediate_points):
     if n_clicks > 0:
         if not start or not end:
             return dbc.Alert("Ошибка: Не все поля заполнены!", color="danger"), {}, {'display': 'none'}
 
-        # Get coordinates for start and end locations
-        cords_start = get_coords_by_address(start)
-        cords_end = get_coords_by_address(end)
-
-        if 'lon' not in cords_start or 'lat' not in cords_start:
-            return dbc.Alert(f"Ошибка: {cords_start}", color="danger"), {}, {'display': 'none'}
-        if 'lon' not in cords_end or 'lat' not in cords_end:
-            return dbc.Alert(f"Ошибка: {cords_end}", color="danger"), {}, {'display': 'none'}
-
         addresses = [start, end]
-        # Get weather forecasts for each location
+
+        # Process intermediate points entered by the user
+        if intermediate_points:
+            addresses += [point.strip() for point in intermediate_points.split(',')]
+
         weather_data = {'addresses': [], 'forecast': []}
 
         for address in addresses:
             coords = get_coords_by_address(address)
-            forecast = get_forecast_by_lat_lon(coords['lat'], coords['lon'])  # Always gets 5 days
+            forecast = get_forecast_by_lat_lon(coords['lat'], coords['lon'])
             weather_data['addresses'].append(coords['res_adr'])
-            weather_data['forecast'].append(forecast[:days])  # Only take the selected number of days
+            weather_data['forecast'].append(forecast[:days])
 
-        # Generate weather cards
-        cards = [
-            generate_weather_card(address, weather_data, i, days)
-            for i, address in enumerate(weather_data['addresses'])
-        ]
+
+        cards = [generate_weather_card(address, weather_data, i, days) for i, address in
+                 enumerate(weather_data['addresses'])]
 
         return dbc.Row([dbc.Col(card, width=12) for card in cards]), weather_data, {'display': 'block'}
+
     return html.Div(), {}, {'display': 'none'}
-
-
 
 
 @app.callback(
@@ -190,18 +198,15 @@ def update_weather_graph(weather_data, selected_param):
 
     if selected_param == 'temp':
         for forecast in weather_data['forecast']:
-            # Рассчитываем среднюю температуру для каждого дня
             selected_data.append([round((day['temp']['min'] + day['temp']['max']) / 2) for day in forecast])
 
         title = "Температура (°C)"
     elif selected_param == 'wind':
         for forecast in weather_data['forecast']:
-            # Ветер для каждого дня
             selected_data.append([day['wind_speed'] for day in forecast])
         title = "Скорость ветра (м/с)"
     else:
         for forecast in weather_data['forecast']:
-            # Вероятность осадков для каждого дня
             selected_data.append([day['rain_prob'] for day in forecast])
         title = "Вероятность осадков (%)"
 
@@ -223,7 +228,5 @@ def update_weather_graph(weather_data, selected_param):
     return fig
 
 
-
-
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=True)
+    app.run_server(debug=True)
