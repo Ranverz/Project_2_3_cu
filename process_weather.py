@@ -1,8 +1,8 @@
 import requests
 
-weather_key = ''  #вставьте свой код от accuweather
+weather_key = 'Hz0V96PzSdHT9Bbj1UpGKLcv1WQkGa4w'  #вставьте свой код от accuweather
 
-maps_key = '' #вставьте свой код от геокодера яндекса
+maps_key = '182f8bbf-48db-450e-a902-b5134e510539' #вставьте свой код от геокодера яндекса
 
 
 def get_coords_by_address(address: str):
@@ -27,7 +27,7 @@ def get_coords_by_address(address: str):
                 'lon': lon,
                 'lat': lat}
     else:
-        return 'not a valid address'
+        return f'not a valid address code: {response.status_code}'
 
 def get_geopos_by_lat_lon(lat, lon):
     geo_url = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search'
@@ -43,10 +43,9 @@ def get_geopos_by_lat_lon(lat, lon):
 
 
 def get_forecast_by_lat_lon(lat, lon):
-
     lockey = get_geopos_by_lat_lon(lat, lon)
     if lockey != 'cant access geodata':
-        forecast_url = f'http://dataservice.accuweather.com/forecasts/v1/daily/1day/{lockey}'
+        forecast_url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/{lockey}'
         params = {
             'apikey': weather_key,
             'details': True,
@@ -56,25 +55,36 @@ def get_forecast_by_lat_lon(lat, lon):
             response = requests.get(forecast_url, params=params)
         except:
             return 'cant get forecast data'
+
+        data = []
+
+
+        for day in response.json()['DailyForecasts']:
+            temp_min = day['Temperature']['Minimum']['Value']
+            temp_max = day['Temperature']['Maximum']['Value']
+
+            humidity_procent_max = day['Day']['RelativeHumidity']['Maximum']
+            humidity_procent_avg = day['Day']['RelativeHumidity']['Average']
+            humidity_procent_min = day['Day']['RelativeHumidity']['Minimum']
+
+            wind_speed = day['Day']['Wind']['Speed']['Value']
+
+            rain_prob = day['Day']['RainProbability']
+
+            data.append(
+                {
+                    'temp': {'min': temp_min, 'max': temp_max},
+                    'humidity_procent': {'min': humidity_procent_min, 'max': humidity_procent_max,
+                                         'avg': humidity_procent_avg},
+                    'wind_speed': wind_speed,
+                    'rain_prob': rain_prob,
+                }
+            )
+
+        return data
+
     else:
         return 'cant access geodata'
-
-    temp_min = response.json()['DailyForecasts'][0]['Temperature']['Minimum']['Value']
-    temp_max = response.json()['DailyForecasts'][0]['Temperature']['Maximum']['Value']
-
-    humidity_procent_max = response.json()['DailyForecasts'][0]['Day']['RelativeHumidity']['Maximum']
-    humidity_procent_avg = response.json()['DailyForecasts'][0]['Day']['RelativeHumidity']['Average']
-    humidity_procent_min = response.json()['DailyForecasts'][0]['Day']['RelativeHumidity']['Minimum']
-
-    wind_speed = response.json()['DailyForecasts'][0]['Day']['Wind']['Speed']['Value']
-
-    rain_prob = response.json()['DailyForecasts'][0]['Day']['RainProbability']
-    return {
-        'temp': {'min': temp_min, 'max': temp_max},
-        'humidity_procent': {'min': humidity_procent_min, 'max': humidity_procent_max, 'avg': humidity_procent_avg},
-        'wind_speed': wind_speed,
-        'rain_prob': rain_prob,
-    }
 
 
 def define_if_weather_is_bad(temp, wind_speed, rain_prob):
