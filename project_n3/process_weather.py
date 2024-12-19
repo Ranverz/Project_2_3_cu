@@ -1,8 +1,8 @@
 import requests
 
-weather_key = 'dM0pZhdzjLlvNdVXIjacwVtOaU0tw7zG'  #вставьте свой код от accuweather
+weather_key = ''  #вставьте свой код от accuweather
 
-maps_key = '182f8bbf-48db-450e-a902-b5134e510539' #вставьте свой код от геокодера яндекса
+maps_key = '' #вставьте свой код от геокодера яндекса
 
 
 def get_coords_by_address(address: str):
@@ -27,7 +27,7 @@ def get_coords_by_address(address: str):
                 'lon': lon,
                 'lat': lat}
     else:
-        return f'not a valid address code: {response.status_code}'
+        return f'not a valid address'
 
 def get_geopos_by_lat_lon(lat, lon):
     geo_url = 'http://dataservice.accuweather.com/locations/v1/cities/geoposition/search'
@@ -39,12 +39,15 @@ def get_geopos_by_lat_lon(lat, lon):
         response = requests.get(geo_url, params=params)
     except:
         return 'cant access geodata'
-    return response.json()['Key'] #str
+    if response.status_code == 200:
+        return response.json()['Key'] #str
+    else:
+        return 'cant access geodata (out of limit)'
 
 
 def get_forecast_by_lat_lon(lat, lon):
     lockey = get_geopos_by_lat_lon(lat, lon)
-    if lockey != 'cant access geodata':
+    if lockey != 'cant access geodata' and lockey != 'cant access geodata (out of limit)':
         forecast_url = f'http://dataservice.accuweather.com/forecasts/v1/daily/5day/{lockey}'
         params = {
             'apikey': weather_key,
@@ -84,7 +87,7 @@ def get_forecast_by_lat_lon(lat, lon):
         return data
 
     else:
-        return 'cant access geodata'
+        return 'cant access geodata(out of limit)'
 
 
 def define_if_weather_is_bad(temp, wind_speed, rain_prob):
