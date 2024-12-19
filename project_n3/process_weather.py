@@ -1,6 +1,6 @@
 import requests
 
-weather_key = 'Hz0V96PzSdHT9Bbj1UpGKLcv1WQkGa4w'  #вставьте свой код от accuweather
+weather_key = 'dM0pZhdzjLlvNdVXIjacwVtOaU0tw7zG'  #вставьте свой код от accuweather
 
 maps_key = '182f8bbf-48db-450e-a902-b5134e510539' #вставьте свой код от геокодера яндекса
 

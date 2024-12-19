@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from process_weather import get_forecast_by_lat_lon, define_if_weather_is_bad, get_coords_by_address
+from project_n3.process_weather import get_forecast_by_lat_lon, define_if_weather_is_bad, get_coords_by_address
 
 app = Flask(__name__)
 

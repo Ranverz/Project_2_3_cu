@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output, State, callback_context
 import pandas as pd
-from process_weather import get_forecast_by_lat_lon, get_coords_by_address
+from project_n3.process_weather import get_forecast_by_lat_lon, get_coords_by_address
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
