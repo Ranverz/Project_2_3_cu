@@ -1,12 +1,12 @@
 import dash_bootstrap_components as dbc
 import plotly.express as px
-from dash import Dash, dcc, html, Input, Output, State
+from dash import Dash, dcc, html, Input, Output, State, callback_context
 import pandas as pd
 from process_weather import get_forecast_by_lat_lon, get_coords_by_address
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
-server = app.server  # Expose server for deployment
+
 
 # Navbar
 navbar = dbc.NavbarSimple(
@@ -25,10 +25,11 @@ modal = dbc.Modal(
             dbc.Input(id='intermediate-points-input', type='text', placeholder='Введите адреса через запятую')
         ),
         dbc.ModalFooter(
-            dbc.Button("Сохранить", id='save-points-button', className='ml-auto')
+            dbc.Button("Сохранить", id='save-points-button', className='ml-auto', n_clicks=0)
         )
     ],
     id='intermediate-points-modal',
+    is_open=False,
     size='lg',
 )
 
@@ -133,12 +134,22 @@ def generate_weather_card(address, weather_data, index, days):
     State('intermediate-points-modal', 'is_open'),
     State('intermediate-points-input', 'value')
 )
-def toggle_modal(add_clicks, save_clicks, is_open, points_input):
-    if add_clicks:
-        return True
-    if save_clicks:
-        return False
+
+
+def toggle_modal(add_clicks, save_clicks, is_open):
+    ctx = callback_context  # get callback
+    if not ctx.triggered:
+        return is_open
+
+    # check which element triggered callback
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+    if trigger_id == 'add-point-button':
+        return True  # open modal
+    elif trigger_id == 'save-points-button':
+        return False  # close modal
     return is_open
+
 
 
 # Update weather data callback to include intermediate points
@@ -193,7 +204,7 @@ def update_weather_graph(weather_data, selected_param):
 
     # Create graph based on selected parameter
     addresses = weather_data['addresses']
-    days = len(weather_data['forecast'][0])  # Количество дней, на которое получен прогноз
+    days = len(weather_data['forecast'][0])  # days for forecasting
     selected_data = []
 
     if selected_param == 'temp':
@@ -213,7 +224,6 @@ def update_weather_graph(weather_data, selected_param):
     # Create a DataFrame for the data
     data_df = pd.DataFrame({'addresses': addresses})
 
-    # Для каждого дня добавляем столбцы с данными (для каждого параметра)
     for i in range(days):
         data_df[f'Day {i + 1}'] = [forecast[i] for forecast in selected_data]
 
@@ -222,7 +232,7 @@ def update_weather_graph(weather_data, selected_param):
     fig.update_layout(
         xaxis_title="Адрес",
         yaxis_title=title,
-        barmode='group',  # Устанавливаем, чтобы бары были расположены рядом
+        barmode='group',
     )
 
     return fig
